@@ -460,7 +460,7 @@ class RPN(nn.Module):
         ]
         pred_anchor_deltas = [
             # (N, A*B, Hi, Wi) -> (N, A, B, Hi, Wi) -> (N, Hi, Wi, A, B) -> (N, Hi*Wi*A, B)
-            x.view(x.shape[0], -1, self.anchor_generator.box_dim, x.shape[-2], x.shape[-1])
+            x.view((x.shape[0], -1, self.anchor_generator.box_dim, x.shape[-2], x.shape[-1]))
             .permute(0, 3, 4, 1, 2)
             .flatten(1, -2)
             for x in pred_anchor_deltas

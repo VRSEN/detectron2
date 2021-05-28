@@ -222,9 +222,9 @@ if __name__ == "__main__":
     if args.export_method == "caffe2_tracing":
         exported_model = export_caffe2_tracing(cfg, torch_model, sample_inputs)
     elif args.export_method == "scripting":
-        exported_model = export_scripting(torch_model)
+        exported_model = export_scripting(torch_model.float())
     elif args.export_method == "tracing":
-        exported_model = export_tracing(torch_model, sample_inputs)
+        exported_model = export_tracing(torch_model.float(), sample_inputs)
 
     # run evaluation with the converted model
     if args.run_eval:

@@ -192,7 +192,7 @@ def heatmaps_to_keypoints(maps: torch.Tensor, rois: torch.Tensor) -> torch.Tenso
     keypoints_idx = torch.arange(num_keypoints, device=maps.device)
 
     for i in range(num_rois):
-        outsize = (int(heights_ceil[i]), int(widths_ceil[i]))
+        outsize = [int(heights_ceil[i].item()), int(widths_ceil[i].item())]
         roi_map = F.interpolate(
             maps[[i]], size=outsize, mode="bicubic", align_corners=False
         ).squeeze(

@@ -67,7 +67,7 @@ class FPN(Backbone):
             output_norm = get_norm(norm, out_channels)
 
             lateral_conv = Conv2d(
-                in_channels, out_channels, kernel_size=1, bias=use_bias, norm=lateral_norm
+                in_channels, out_channels, kernel_size=1, bias=use_bias, norm=lateral_norm, padding=0, stride=1
             )
             output_conv = Conv2d(
                 out_channels,

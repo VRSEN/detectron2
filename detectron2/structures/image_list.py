@@ -93,7 +93,18 @@ class ImageList(object):
 
         image_sizes = [(im.shape[-2], im.shape[-1]) for im in tensors]
         image_sizes_tensor = [_as_tensor(x) for x in image_sizes]
-        max_size = torch.stack(image_sizes_tensor).max(0).values
+        max_size = torch.stack(image_sizes_tensor)
+        max_size = torch.tensor([max_size[:,0].max(), max_size[:,1].max()], dtype=torch.int)
+#         max_size = (max_size, torch.argmax(torch.stack(image_sizes_tensor), 0))
+        
+#         max_size = [0,0]
+#         for im in tensors:
+#             if im.shape[-2]>max_size[0]:
+#                 max_size[0]=im.shape[-2]
+#             if im.shape[-1]>max_size[1]:
+#                 max_size[1]=im.shape[-1]
+        
+        #max_size = tuple(max_size)
 
         if size_divisibility > 1:
             stride = size_divisibility
@@ -102,7 +113,7 @@ class ImageList(object):
 
         # handle weirdness of scripting and tracing ...
         if torch.jit.is_scripting():
-            max_size: List[int] = max_size.to(dtype=torch.long).tolist()
+            max_size: List[int] = max_size.to(dtype=torch.float).tolist()
         else:
             # https://github.com/pytorch/pytorch/issues/42448
             if TORCH_VERSION >= (1, 7) and torch.jit.is_tracing():
@@ -112,7 +123,7 @@ class ImageList(object):
             # This seems slightly (2%) faster.
             # TODO: check whether it's faster for multiple images as well
             image_size = image_sizes[0]
-            padding_size = [0, max_size[-1] - image_size[1], 0, max_size[-2] - image_size[0]]
+            padding_size = [0, int(max_size[-1] - int(image_size[1])), 0, int(max_size[-2] - int(image_size[0]))]
             batched_imgs = F.pad(tensors[0], padding_size, value=pad_value).unsqueeze_(0)
         else:
             # max_size can be a tensor in tracing mode, therefore convert to list

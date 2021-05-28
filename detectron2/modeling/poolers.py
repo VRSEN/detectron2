@@ -50,8 +50,8 @@ def assign_boxes_to_levels(
     box_sizes = torch.sqrt(cat([boxes.area() for boxes in box_lists]))
     # Eqn.(1) in FPN paper
     level_assignments = torch.floor(
-        canonical_level + torch.log2(box_sizes / canonical_box_size + 1e-8)
-    )
+        canonical_level + torch.log2(box_sizes / canonical_box_size + torch.tensor(1e-8, dtype=torch.float))
+    ).to(torch.float32)
     # clamp level to (min, max), in case the box size is too large or too small
     # for the available feature maps
     level_assignments = torch.clamp(level_assignments, min=min_level, max=max_level)

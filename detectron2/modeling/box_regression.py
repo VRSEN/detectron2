@@ -37,7 +37,7 @@ class Box2BoxTransform(object):
                 factors (dw and dh) are clamped such that they are <= scale_clamp.
         """
         self.weights = weights
-        self.scale_clamp = scale_clamp
+        self.scale_clamp = torch.tensor(scale_clamp, dtype=torch.float)
 
     def get_deltas(self, src_boxes, target_boxes):
         """
@@ -84,19 +84,19 @@ class Box2BoxTransform(object):
                 box transformations for the single box boxes[i].
             boxes (Tensor): boxes to transform, of shape (N, 4)
         """
-        deltas = deltas.float()  # ensure fp32 for decoding precision
-        boxes = boxes.to(deltas.dtype)
+        deltas = deltas.to(torch.float) # ensure fp32 for decoding precision
+        boxes = boxes.to(torch.float)
 
         widths = boxes[:, 2] - boxes[:, 0]
         heights = boxes[:, 3] - boxes[:, 1]
-        ctr_x = boxes[:, 0] + 0.5 * widths
-        ctr_y = boxes[:, 1] + 0.5 * heights
+        ctr_x = boxes[:, 0] + torch.tensor(0.5, dtype=torch.float) * widths
+        ctr_y = boxes[:, 1] + torch.tensor(0.5, dtype=torch.float) * heights
 
         wx, wy, ww, wh = self.weights
-        dx = deltas[:, 0::4] / wx
-        dy = deltas[:, 1::4] / wy
-        dw = deltas[:, 2::4] / ww
-        dh = deltas[:, 3::4] / wh
+        dx = (deltas[:, 0::4] / torch.tensor(wx, dtype=torch.float))
+        dy = (deltas[:, 1::4] / torch.tensor(wy, dtype=torch.float))
+        dw = (deltas[:, 2::4] / torch.tensor(ww, dtype=torch.float))
+        dh = (deltas[:, 3::4] / torch.tensor(wh, dtype=torch.float))
 
         # Prevent sending too large values into torch.exp()
         dw = torch.clamp(dw, max=self.scale_clamp)
@@ -107,10 +107,10 @@ class Box2BoxTransform(object):
         pred_w = torch.exp(dw) * widths[:, None]
         pred_h = torch.exp(dh) * heights[:, None]
 
-        x1 = pred_ctr_x - 0.5 * pred_w
-        y1 = pred_ctr_y - 0.5 * pred_h
-        x2 = pred_ctr_x + 0.5 * pred_w
-        y2 = pred_ctr_y + 0.5 * pred_h
+        x1 = pred_ctr_x - torch.tensor(0.5, dtype=torch.float) * pred_w
+        y1 = pred_ctr_y - torch.tensor(0.5, dtype=torch.float) * pred_h
+        x2 = pred_ctr_x + torch.tensor(0.5, dtype=torch.float) * pred_w
+        y2 = pred_ctr_y + torch.tensor(0.5, dtype=torch.float) * pred_h
         pred_boxes = torch.stack((x1, y1, x2, y2), dim=-1)
         return pred_boxes.reshape(deltas.shape)
 
