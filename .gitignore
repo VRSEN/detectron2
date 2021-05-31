@@ -2,6 +2,8 @@
 output
 instant_test_output
 inference_test_output
+output_tracing
+output_tracing_float
 
 
 *.png
@@ -30,7 +32,6 @@ wheels/
 model_ts*.txt
 
 # ipython/jupyter notebooks
-*.ipynb
 **/.ipynb_checkpoints/
 
 # Editor temporaries

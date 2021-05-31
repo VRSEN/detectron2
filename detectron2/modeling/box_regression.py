@@ -7,6 +7,7 @@ from fvcore.nn import giou_loss, smooth_l1_loss
 from detectron2.layers import cat
 from detectron2.structures import Boxes
 
+
 # Value for clamping large dw and dh predictions. The heuristic is that we clamp
 # such that dw and dh are no larger than what would transform a 16px box into a
 # 1000px box (based on a small anchor, 16px, and a typical image size, 1000px).
@@ -106,12 +107,17 @@ class Box2BoxTransform(object):
         pred_ctr_y = dy * heights[:, None] + ctr_y[:, None]
         pred_w = torch.exp(dw) * widths[:, None]
         pred_h = torch.exp(dh) * heights[:, None]
+        
+#         pred_ctr_x = dx * widths.unsqueeze(0) + ctr_x.unsqueeze(0)
+#         pred_ctr_y = dy * heights.unsqueeze(0) + ctr_y.unsqueeze(0)
+#         pred_w = torch.exp(dw) * widths.unsqueeze(0)
+#         pred_h = torch.exp(dh) * heights.unsqueeze(0)
 
         x1 = pred_ctr_x - torch.tensor(0.5, dtype=torch.float) * pred_w
         y1 = pred_ctr_y - torch.tensor(0.5, dtype=torch.float) * pred_h
         x2 = pred_ctr_x + torch.tensor(0.5, dtype=torch.float) * pred_w
         y2 = pred_ctr_y + torch.tensor(0.5, dtype=torch.float) * pred_h
-        pred_boxes = torch.stack((x1, y1, x2, y2), dim=-1)
+        pred_boxes = torch.stack((x1, y1, x2, y2), dim=2)
         return pred_boxes.reshape(deltas.shape)
 
 
