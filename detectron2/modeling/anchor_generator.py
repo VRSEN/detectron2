@@ -13,7 +13,6 @@ from detectron2.utils.registry import Registry
 ANCHOR_GENERATOR_REGISTRY = Registry("ANCHOR_GENERATOR")
 ANCHOR_GENERATOR_REGISTRY.__doc__ = """
 Registry for modules that creates object detection anchors for feature maps.
-
 The registered object will be called with `obj(cfg, input_shape)`.
 """
 
@@ -56,10 +55,8 @@ def _broadcast_params(params, num_features, name):
     If one size (or aspect ratio) is specified and there are multiple feature
     maps, we "broadcast" anchors of that single size (or aspect ratio)
     over all feature maps.
-
     If params is list[float], or list[list[float]] with len(params) == 1, repeat
     it num_features time.
-
     Returns:
         list[list[float]]: param for each feature
     """
@@ -94,7 +91,6 @@ class DefaultAnchorGenerator(nn.Module):
     def __init__(self, *, sizes, aspect_ratios, strides, offset=0.5):
         """
         This interface is experimental.
-
         Args:
             sizes (list[list[float]] or list[float]):
                 If ``sizes`` is list[list[float]], ``sizes[i]`` is the list of anchor sizes
@@ -153,7 +149,6 @@ class DefaultAnchorGenerator(nn.Module):
                 For example, if at every pixel we use anchors of 3 aspect
                 ratios and 5 sizes, the number of anchors is 15.
                 (See also ANCHOR_GENERATOR.SIZES and ANCHOR_GENERATOR.ASPECT_RATIOS in config)
-
                 In standard RPN models, `num_anchors` on every feature map is the same.
         """
         return [len(cell_anchors) for cell_anchors in self.cell_anchors]
@@ -180,11 +175,9 @@ class DefaultAnchorGenerator(nn.Module):
         boxes of different sizes and aspect_ratios centered at (0, 0).
         We can later build the set of anchors for a full feature map by
         shifting and tiling these tensors (see `meth:_grid_anchors`).
-
         Args:
             sizes (tuple[float]):
             aspect_ratios (tuple[float]]):
-
         Returns:
             Tensor of shape (len(sizes) * len(aspect_ratios), 4) storing anchor boxes
                 in XYXY format.
@@ -215,7 +208,6 @@ class DefaultAnchorGenerator(nn.Module):
         """
         Args:
             features (list[Tensor]): list of backbone feature maps on which to generate anchors.
-
         Returns:
             list[Boxes]: a list of Boxes containing all the anchors for each feature map
                 (i.e. the cell anchors repeated over all locations in the feature map).
@@ -243,7 +235,6 @@ class RotatedAnchorGenerator(nn.Module):
     def __init__(self, *, sizes, aspect_ratios, strides, angles, offset=0.5):
         """
         This interface is experimental.
-
         Args:
             sizes (list[list[float]] or list[float]):
                 If sizes is list[list[float]], sizes[i] is the list of anchor sizes
@@ -306,7 +297,6 @@ class RotatedAnchorGenerator(nn.Module):
                 ratios, 2 sizes and 5 angles, the number of anchors is 30.
                 (See also ANCHOR_GENERATOR.SIZES, ANCHOR_GENERATOR.ASPECT_RATIOS
                 and ANCHOR_GENERATOR.ANGLES in config)
-
                 In standard RRPN models, `num_anchors` on every feature map is the same.
         """
         return [len(cell_anchors) for cell_anchors in self.cell_anchors]
@@ -333,12 +323,10 @@ class RotatedAnchorGenerator(nn.Module):
         boxes of different sizes, aspect_ratios, angles centered at (0, 0).
         We can later build the set of anchors for a full feature map by
         shifting and tiling these tensors (see `meth:_grid_anchors`).
-
         Args:
             sizes (tuple[float]):
             aspect_ratios (tuple[float]]):
             angles (tuple[float]]):
-
         Returns:
             Tensor of shape (len(sizes) * len(aspect_ratios) * len(angles), 5)
                 storing anchor boxes in (x_ctr, y_ctr, w, h, angle) format.
@@ -362,7 +350,6 @@ class RotatedAnchorGenerator(nn.Module):
         """
         Args:
             features (list[Tensor]): list of backbone feature maps on which to generate anchors.
-
         Returns:
             list[RotatedBoxes]: a list of Boxes containing all the anchors for each feature map
                 (i.e. the cell anchors repeated over all locations in the feature map).
