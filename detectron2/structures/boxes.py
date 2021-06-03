@@ -198,7 +198,8 @@ class Boxes:
             box_size (height, width): The clipping box's size.
         """
         assert torch.isfinite(self.tensor).all(), "Box tensor contains infinite or NaN!"
-        h, w = box_size
+        h = box_size[0]
+        w = box_size[1]
         x1 = self.tensor[:, 0].clamp(min=0, max=w)
         y1 = self.tensor[:, 1].clamp(min=0, max=h)
         x2 = self.tensor[:, 2].clamp(min=0, max=w)

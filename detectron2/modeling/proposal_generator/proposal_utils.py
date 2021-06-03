@@ -68,9 +68,11 @@ def find_top_rpn_proposals(
     for level_id, (proposals_i, logits_i) in enumerate(zip(proposals, pred_objectness_logits)):
         Hi_Wi_A = logits_i.shape[1]
         if isinstance(Hi_Wi_A, torch.Tensor):  # it's a tensor in tracing
-            num_proposals_i = torch.clamp(Hi_Wi_A, max=pre_nms_topk)
+            num_proposals_i = torch.clamp(Hi_Wi_A.float(), max=float(pre_nms_topk))
+            num_proposals_i = num_proposals_i.int().item()
         else:
-            num_proposals_i = min(int(Hi_Wi_A), pre_nms_topk)
+            num_proposals_i = int(min(Hi_Wi_A, pre_nms_topk))
+            
 
         # sort is faster than topk: https://github.com/pytorch/pytorch/issues/22812
         topk_scores_i, topk_idx = logits_i.topk(num_proposals_i, dim=1)
@@ -79,8 +81,13 @@ def find_top_rpn_proposals(
 #         topk_idx = idx.narrow(1, 0, num_proposals_i)
 
         # each is N x topk
-        topk_proposals_i = proposals_i[batch_idx[:, None], topk_idx]  # N x topk x 4
-
+        #batch_idx = batch_idx[:, None]
+        from IPython import embed
+        embed()
+        
+        topk_proposals_i = proposals_i[torch.tensor(batch_idx.unsqueeze(-1)), topk_idx]  # N x topk x 4
+            
+        
         topk_proposals.append(topk_proposals_i)
         topk_scores.append(topk_scores_i)
         level_ids.append(torch.full((num_proposals_i,), level_id, dtype=torch.int64, device=device))
@@ -94,7 +101,7 @@ def find_top_rpn_proposals(
     results: List[Instances] = []
     for n, image_size in enumerate(image_sizes):
         boxes = Boxes(topk_proposals[n])
-        scores_per_img = topk_scores[n]
+        scores_per_img = torch.tensor(topk_scores[n])
         lvl = level_ids
 
         valid_mask = torch.isfinite(boxes.tensor).all(dim=1) & torch.isfinite(scores_per_img)
@@ -107,12 +114,15 @@ def find_top_rpn_proposals(
             scores_per_img = scores_per_img[valid_mask]
             lvl = lvl[valid_mask]
         boxes.clip(image_size)
-
+#         from IPython import embed
+#         embed()
         # filter empty boxes
-        keep = boxes.nonempty(threshold=min_box_size)
+        keep = boxes.nonempty(threshold=min_box_size).nonzero().squeeze()
         if _is_tracing() or keep.sum().item() != len(boxes):
             boxes, scores_per_img, lvl = boxes[keep], scores_per_img[keep], lvl[keep]
-
+            #boxes = boxes.tensor[keep]
+            #scores_per_img, lvl = scores_per_img[keep], lvl[keep]
+        #embed()
         keep = batched_nms(boxes.tensor, scores_per_img, lvl, nms_thresh)
         # In Detectron1, there was different behavior during training vs. testing.
         # (https://github.com/facebookresearch/Detectron/issues/459)
