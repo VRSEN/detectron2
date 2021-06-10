@@ -3,6 +3,7 @@ import logging
 import math
 from typing import List, Tuple, Union
 import torch
+from tensorflow.image import combined_non_max_suppression
 
 from detectron2.layers import batched_nms, cat
 from detectron2.structures import Boxes, Instances
@@ -82,8 +83,6 @@ def find_top_rpn_proposals(
 
         # each is N x topk
         #batch_idx = batch_idx[:, None]
-        from IPython import embed
-        embed()
         
         topk_proposals_i = proposals_i[torch.tensor(batch_idx.unsqueeze(-1)), topk_idx]  # N x topk x 4
             
@@ -114,16 +113,19 @@ def find_top_rpn_proposals(
             scores_per_img = scores_per_img[valid_mask]
             lvl = lvl[valid_mask]
         boxes.clip(image_size)
-#         from IPython import embed
-#         embed()
+
         # filter empty boxes
-        keep = boxes.nonempty(threshold=min_box_size).nonzero().squeeze()
-        if _is_tracing() or keep.sum().item() != len(boxes):
-            boxes, scores_per_img, lvl = boxes[keep], scores_per_img[keep], lvl[keep]
+        keep = boxes.nonempty(threshold=min_box_size)#.squeeze()
+#         if _is_tracing() or keep.sum().item() != len(boxes):
+#             boxes, scores_per_img, lvl = boxes[keep], scores_per_img[keep], lvl[keep]
             #boxes = boxes.tensor[keep]
             #scores_per_img, lvl = scores_per_img[keep], lvl[keep]
         #embed()
-        keep = batched_nms(boxes.tensor, scores_per_img, lvl, nms_thresh)
+        
+        
+        # keep = batched_nms(boxes.tensor, scores_per_img, lvl, nms_thresh)
+        nmsed_boxes, nmsed_scores, nmsed_classes, valid_detections = combined_non_max_suppression(boxes.tensor.unsqueeze(1).unsqueeze(0).cpu(), scores_per_img.unsqueeze(1).unsqueeze(0).cpu(), post_nms_topk, post_nms_topk, nms_thresh)
+        
         # In Detectron1, there was different behavior during training vs. testing.
         # (https://github.com/facebookresearch/Detectron/issues/459)
         # During training, topk is over the proposals from *all* images in the training batch.
@@ -131,11 +133,11 @@ def find_top_rpn_proposals(
         # As a result, the training behavior becomes batch-dependent,
         # and the configuration "POST_NMS_TOPK_TRAIN" end up relying on the batch size.
         # This bug is addressed in Detectron2 to make the behavior independent of batch size.
-        keep = keep[:post_nms_topk]  # keep is already sorted
+        #keep = keep[:post_nms_topk]  # keep is already sorted
 
         res = Instances(image_size)
-        res.proposal_boxes = boxes[keep]
-        res.objectness_logits = scores_per_img[keep]
+        res.proposal_boxes = Boxes(torch.tensor(nmsed_boxes.numpy()).squeeze().cuda()) #boxes[keep]
+        res.objectness_logits = torch.tensor(nmsed_scores.numpy().squeeze()).cuda()#scores_per_img[keep]
         results.append(res)
     return results
 
