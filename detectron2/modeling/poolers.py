@@ -244,7 +244,12 @@ class ROIPooler(nn.Module):
         for level, pooler in enumerate(self.level_poolers):
             inds = nonzero_tuple(level_assignments == level)[0]
             pooler_fmt_boxes_level = pooler_fmt_boxes[inds.tolist()]
+            if pooler_fmt_boxes_level.numel():
+                assert pooler_fmt_boxes_level[:,0].max()==0, "batch dim!=0"
+            #pooler_fmt_boxes_level = pooler_fmt_boxes_level[:, [1,2,3,4]]
             # Use index_put_ instead of advance indexing, to avoid pytorch/issues/49852
-            output.index_put_((inds,), pooler(x[level], pooler_fmt_boxes_level))
+            output.index_put_((inds,), pooler(x[level], pooler_fmt_boxes_level.to(dtype=x[level].dtype)))
+            from IPython import embed
+            embed()
 
         return output

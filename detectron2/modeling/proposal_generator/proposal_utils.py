@@ -137,7 +137,7 @@ def find_top_rpn_proposals(
 
         res = Instances(image_size)
         res.proposal_boxes = Boxes(torch.tensor(nmsed_boxes.numpy()).squeeze().cuda()) #boxes[keep]
-        res.objectness_logits = torch.tensor(nmsed_scores.numpy().squeeze()).cuda()#scores_per_img[keep]
+        res.objectness_logits = torch.tensor(nmsed_scores.numpy().squeeze()).cuda() #scores_per_img[keep]
         results.append(res)
     return results
 

@@ -1,6 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 from torch import nn
 from torchvision.ops import roi_align
+#import tensorflow as tf
 
 
 # NOTE: torchvision's RoIAlign has a different default aligned=False
@@ -52,17 +53,34 @@ class ROIAlign(nn.Module):
             input: NCHW images
             rois: Bx5 boxes. First column is the index into N. The other 4 columns are xyxy.
         """
-        assert rois.dim() == 2 and rois.size(1) == 5
+        #assert rois.dim() == 2 and rois.size(1) == 5
         if input.is_quantized:
             input = input.dequantize()
         return roi_align(
             input,
-            rois.to(dtype=input.dtype),
+            rois,#.to(dtype=input.dtype),
             self.output_size,
             self.spatial_scale,
             self.sampling_ratio,
             self.aligned,
         )
+#         """
+#         Args:
+#             featuremap: 1xCxHxW
+#             boxes: Nx4 floatbox
+#             resolution: output spatial resolution
+#         Returns:
+#             NxCx res x res
+#         """
+#         # sample 4 locations per roi bin
+#         ret = tf.image.crop_and_resize(
+#             input.cpu(), rois[:,[1,2,3,4]].cpu(),
+#             tf.zeros([rois.shape[0]], dtype=tf.int32),
+#             self.output_size)
+#         ret = tf.nn.avg_pool(ret, [1, 1, 2, 2], [1, 1, 2, 2], padding='SAME', data_format='NCHW')
+#         from IPython import embed
+#         embed()
+#         return torch.tensor(ret.numpy()).cuda()
 
     def __repr__(self):
         tmpstr = self.__class__.__name__ + "("
